@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.myBlog.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.example.myBlog.dto.User">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="account" property="account"/>
+        <result column="password" property="password"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <insert id="addUser" parameterType="com.example.myBlog.dto.UserDto">
+        INSERT INTO user(name,account,password,status) VALUE(#{userDto.name,userDto.account,userDto.password,userDto.status})
+    </insert>
+
+    <delete id="deleteUser" parameterType="com.example.myBlog.dto.UserDto">
+
+
+    </delete>
+
+    <select id="selectUser" parameterType="com.example.myBlog.dto.UserDto" resultMap="BaseResultMap">
+
+
+    </select>
+
+    <update id="updateUser" parameterType="com.example.myBlog.dto.UserDto">
+
+
+    </update>
+
+   <!-- &lt;!&ndash; 通用查询映射结果 &ndash;&gt;
+    <resultMap id="BaseResultMap" type="com.hantek.tbbl.basicsys.model.Feedback">
+        <id column="id" property="id" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="gmt_create" property="gmtCreate" />
+        <result column="gmt_modifed" property="gmtModifed" />
+        <result column="title" property="title" />
+        <result column="content" property="content" />
+        <result column="user_id" property="userId" />
+        <result column="feedback_status" property="feedbackStatus" />
+        <result column="domain" property="domain" />
+        <result column="reply_content" property="replyContent" />
+        <result column="reply_user_id" property="replyUserId" />
+        <result column="reply_time" property="replyTime" />
+    </resultMap>
+
+    <resultMap id="ResultVoMap" type="com.hantek.tbbl.basicsys.vo.FeedbackVo">
+        <id column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="content" property="content" />
+        <result column="user_id" property="userId" />
+        <result column="feedback_status" property="feedbackStatus" />
+        <result column="domain" property="domain" />
+        <result column="gmt_create" property="gmtCreate"/>
+        <result column="name" property="name"/>
+        <result column="reply_content" property="replyContent" />
+        <result column="reply_name" property="replyName" />
+        <result column="reply_time" property="replyTime" />
+        <result column="orgName" property="orgName" />
+    </resultMap>
+
+    &lt;!&ndash; 通用查询结果列 &ndash;&gt;
+    <sql id="Base_Column_List">
+        id, is_deleted AS isDeleted, gmt_create AS gmtCreate, gmt_modifed AS gmtModifed, title, content, user_id AS userId, feedback_status AS feedbackStatus, domain, reply_content AS replyContent, reply_user_id AS replyUserId, reply_time AS replyTime
+    </sql>
+
+    <update id="editFeed" parameterType="com.hantek.tbbl.basicsys.dto.FeedbackDto">
+        UPDATE T_FEEDBACK SET
+        FEEDBACK_STATUS=2,REPLY_CONTENT=#{feedbackDto.replyContent},REPLY_USER_ID=#{feedbackDto.replyUserId},REPLY_TIME=#{feedbackDto.replyTime}
+        WHERE
+        id=#{feedbackDto.id} AND FEEDBACK_STATUS=1
+    </update>
+
+    <delete id="delFeed" parameterType="long">
+        UPDATE T_FEEDBACK SET is_deleted=1 WHERE id=#{feedbackDto.id}
+    </delete>
+
+    <select id="getFeed" parameterType="com.hantek.tbbl.basicsys.dto.FeedbackDto" resultMap="ResultVoMap">
+        SELECT a.id,a.title,a.content,b.name,a.gmt_create,a.feedback_status,a.domain, o.name as orgName
+        ,a.reply_content
+        ,c.name AS reply_name
+        ,a.reply_time
+        FROM T_FEEDBACK a LEFT JOIN T_USER b ON
+        a.user_id=b.id
+        LEFT JOIN T_USER c ON a.reply_user_id=c.id
+        LEFT JOIN T_SYS_ORG o ON a.domain = o.id
+        <where>
+            a.is_deleted=0
+            <if test="feedbackDto.name!=null and feedbackDto.name!=''" >
+                and b.name like "%"#{feedbackDto.name}"%"
+            </if>
+            <if test="feedbackDto.startTime!=null">
+                and a.gmt_create &gt;= #{feedbackDto.startTime}
+            </if>
+            <if test="feedbackDto.endTime!=null">
+                and a.gmt_create &lt;= #{feedbackDto.endTime}
+            </if>
+            <if test="feedbackDto.domainIdList != null">
+                AND a.domain in
+                <foreach item="item" index="index"
+                         collection="feedbackDto.domainIdList" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        ORDER BY a.feedback_status, a.gmt_create desc
+    </select>
+
+    <select id="getFrontSelect" parameterType="com.hantek.tbbl.basicsys.dto.FeedbackDto" resultMap="ResultVoMap">
+        SELECT a.id,a.title,a.content,a.gmt_create
+        ,a.reply_content
+        ,a.reply_time
+        FROM T_FEEDBACK a LEFT JOIN T_USER b ON
+        a.user_id=b.id
+        LEFT JOIN T_USER c ON a.reply_user_id=c.id
+        <where>
+            a.is_deleted=0
+            <if test="feedbackDto.userId!=null">
+                and a.user_id = #{feedbackDto.userId}
+            </if>
+            <if test="feedbackDto.name!=null and feedbackDto.name!=''" >
+                and b.name like "%"#{feedbackDto.name}"%"
+            </if>
+            <if test="feedbackDto.startTime!=null">
+                and a.gmt_create &gt;= #{feedbackDto.startTime}
+            </if>
+            <if test="feedbackDto.endTime!=null">
+                and a.gmt_create &lt;= #{feedbackDto.endTime}
+            </if>
+            ORDER BY a.feedback_status DESC, a.gmt_create desc
+        </where>
+    </select>
+
+    <insert id="frontAdd" parameterType="com.hantek.tbbl.basicsys.dto.FeedbackDto">
+        INSERT INTO t_feedback(is_deleted,feedback_status,gmt_create,user_id,title,content) VALUE(0,1,#{feedbackDto.gmtCreate},#{feedbackDto.userId},#{feedbackDto.title},#{feedbackDto.content})
+    </insert>-->
+
+</mapper>
